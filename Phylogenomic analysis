@@ -11,7 +11,7 @@ busco -i genome.fa -c 20 -o busco -m geno -l fungi_obd10 --offline
 #3. Execute extract_busco.sh to extract 'full_table_tsv' files from each sample folder
 
 #extract_busco.sh
-```
+```markdown
 #!/bin/bash
 
 # 定义路径
@@ -61,7 +61,7 @@ paste *.col > "$base_dir/combined_busco.tsv"
 rm -rf "$temp_dir"
 
 echo "完成！结果已保存到 $base_dir/combined_busco.tsv"
-```
+
 
 # Calculate gene occurrence rates across all samples: For each BUSCO gene, determine its persence/absence proportion in the combined_busco.tsv
 # encode BUSCO statuses: covert status values to binary format: Complete/Duplicated to 1 (present), Fragmented/missing to 0 (absent)
