@@ -1,0 +1,241 @@
+#Note: This pipeline is used for phylogenomic analysis based on BUSCO genes.
+#Step 1: Detection of BUSCO genes
+#Following the website https://busco.ezlab.org/ to install BUSCO v5 and dowload the BUSCO dataset of fungi_obd10
+busco -i genome.fa -c 20 -o busco -m geno -l fungi_obd10 --offline
+#run a circle to identify the busco genes of all genomes
+
+#Step 2: sample and busco gene filtering
+#data preparation Instructions
+#1. Place BUSCO result files for each sample in the current directory
+#2. Name sample forder using genome accession numbers (e.g., GCA_000000001.1)
+#3. Execute extract_busco.sh to extract 'full_table_tsv' files from each sample folder
+
+#extract_busco.sh
+```
+#!/bin/bash
+
+# 定义路径
+base_dir="/data/CMTG_genome_project/tree/"
+
+# 创建一个临时目录用于存储中间文件
+temp_dir=$(mktemp -d)
+cd "$temp_dir"
+
+# 初始化一个计数器，用于判断是否是第一个文件
+first_file=1
+
+# 遍历每个样品的文件夹
+for dir in "$base_dir"/*/; do
+  # 获取样品名称（目录名）
+  sample_name=$(basename "$dir")
+  
+  # 定义目标文件路径
+  target_file="$dir/run_fungi_odb10/full_table.tsv"
+  
+  # 检查目标文件是否存在
+  if [ ! -f "$target_file" ]; then
+    echo "警告: 文件 $target_file 不存在，跳过此样品。"
+    continue
+  fi
+  
+  # 提取非 # 开头的行
+  filtered_content=$(grep -v '^#' "$target_file")
+  
+  # 提取前两列并去重
+  if [ $first_file -eq 1 ]; then
+    # 第一个文件，提取前两列并去重，添加表头
+    echo -e "busco\t$sample_name" > "${sample_name}.col"
+    echo "$filtered_content" | awk '{print $1 "\t" $2}' | sort -u -k1,1 | awk '{print $1 "\t" $2}' >> "${sample_name}.col"
+    first_file=0
+  else
+    # 后续文件，提取第二列并去重，添加表头
+    echo -e "$sample_name" > "${sample_name}.col"
+    echo "$filtered_content" | awk '{print $1 "\t" $2}' | sort -u -k1,1 | awk '{print $2}' >> "${sample_name}.col"
+  fi
+done
+
+# 合并所有列
+paste *.col > "$base_dir/combined_busco.tsv"
+
+# 清理临时文件
+rm -rf "$temp_dir"
+
+echo "完成！结果已保存到 $base_dir/combined_busco.tsv"
+```
+
+# Calculate gene occurrence rates across all samples: For each BUSCO gene, determine its persence/absence proportion in the combined_busco.tsv
+# encode BUSCO statuses: covert status values to binary format: Complete/Duplicated to 1 (present), Fragmented/missing to 0 (absent)
+# usually retain genes with <5% missing data (i.e., present in at least 95% of samples). When calculate the missing data, outgroup taxa are not included.
+# Exclude samples with BUSCO completeness substantially lower than closely related taxa  (likely indicating poor assembly auality)
+# Export final gene set (single_busco.ID) for phylogenomic analysis
+
+Step 3  fasta file for tree construction
+#run_alignment.sh
+```
+#!/bin/bash
+定义路径
+base_path="/data/CMTG_genome_project/tree"
+busco_ids_file="single_busco.ID"
+#检查single_busco.ID文件是否存在
+if \[\[ ! -f "`$base_path/$`busco\_ids\_file" ]]; then
+echo "Error: `$base_path/$`busco\_ids\_file does not exist."
+exit 1
+fi
+读取single_busco.ID文件中的每个buscoID
+while read -r busco_id; do 
+# 定义输出文件名 
+output_file="$busco_id.faa"
+# 清空或创建输出文件
+> "$output_file"
+
+# 遍历 base_path 下的所有文件夹（样本文件夹）
+for sample_path in "$base_path"/*; do
+    [[ -d "$sample_path" ]] || continue
+
+    # ****** 关键：只取文件夹名 ******
+    sample_id=$(basename "$sample_path")
+        # 构造目标文件路径
+        target_file="$sample_id/run_fungi_odb10/busco_sequences/single_copy_busco_sequences/$busco_id.faa"
+
+        # 检查目标文件是否存在
+        if [[ -f "$target_file" ]]; then
+            # 如果存在则追加内容到输出文件
+           # ===== 新增：把以 > 开头的行替换为 >sampleID =====
+           sed "s/^>.*/>$sample_id/" "$target_file" >> "$output_file" 
+        else
+            # 如果不存在则写入缺失信息
+            echo ">$sample_id" >> "$output_file"
+        fi
+ done
+
+echo "Processed $busco_id. Output written to $output_file"
+```
+
+# Apply mafft to align every faa file and output files include buscoID.aligned.fasta buscoID.trimed.fasta buscoID.trimed.phylip
+
+```
+#!/bin/bash
+定义路径
+base_path="/data/CMTG_genome_project/tree"
+busco_ids_file="single_busco.ID"
+#检查single_busco.ID文件是否存在
+if \[\[ ! -f "`$base_path/$`busco\_ids\_file" ]]; then
+echo "Error: `$base_path/$`busco\_ids\_file does not exist."
+exit 1
+fi
+读取single_busco.ID文件中的每个buscoID
+while read -r busco_id; do 
+# 定义输出文件名 
+output_file="$busco_id.faa"
+# 清空或创建输出文件
+> "$output_file"
+
+# 遍历 base_path 下的所有文件夹（样本文件夹）
+for sample_path in "$base_path"/*; do
+    [[ -d "$sample_path" ]] || continue
+
+    # ****** 关键：只取文件夹名 ******
+    sample_id=$(basename "$sample_path")
+        # 构造目标文件路径
+        target_file="$sample_id/run_fungi_odb10/busco_sequences/single_copy_busco_sequences/$busco_id.faa"
+
+        # 检查目标文件是否存在
+        if [[ -f "$target_file" ]]; then
+            # 如果存在则追加内容到输出文件
+           # ===== 新增：把以 > 开头的行替换为 >sampleID =====
+           sed "s/^>.*/>$sample_id/" "$target_file" >> "$output_file" 
+        else
+            # 如果不存在则写入缺失信息
+            echo ">$sample_id" >> "$output_file"
+        fi
+ done
+
+echo "Processed $busco_id. Output written to $output_file"
+```
+
+# merge alligned phylip file of every busco ID and the absent gene loci are filled by gaps
+# merge_phylip.sh
+
+```
+#!/usr/bin/env python3
+import os
+
+def merge_phylip_files(base_path, sample_list, output_file):
+    # --- 1. 读入清单，去重并保持顺序 ---
+    with open(sample_list) as f:
+        seen_lines = f.readlines()
+    # 用 dict 保持顺序去重（Python 3.7+ 有序）
+    all_samples = list(dict.fromkeys(ln.strip() for ln in seen_lines if ln.strip()))
+    expected_cnt = len(all_samples)          # 去重后的真实期望数
+
+    # --- 2. 收集所有待合并的 phylip 文件 ---
+    files = [f for f in os.listdir(base_path) if f.endswith('.phylip')]
+    if not files:
+        print("Error: 目录下找不到任何 .phylip 文件")
+        return
+
+    # --- 3. 初始化容器 ---
+    seqs = {s: [] for s in all_samples}
+    gene_lengths = []
+    seen_samples = set()      # 真实出现过的样品
+
+    # --- 4. 逐个文件处理（略，与之前相同） ---
+    for fname in files:
+        fpath = os.path.join(base_path, fname)
+        with open(fpath) as f:
+            head = f.readline().strip().split()
+            nseq, L = int(head[0]), int(head[1])
+            gene_lengths.append(L)
+
+            present = {}
+            for _ in range(nseq):
+                line = f.readline().rstrip('\n')
+                if len(line) < 30:
+                    line += ' ' * (30 - len(line))
+                sid = line[:30].rstrip()
+                present[sid] = line[30:].strip()
+                seen_samples.add(sid)
+
+            for s in all_samples:
+                seqs[s].append(present.get(s, '-' * L))
+
+       # --- 5. 双向检查 ---
+    set_expect = set(all_samples)          # 清单集合
+    set_actual = seen_samples              # phylip 出现集合
+
+    missing   = [s for s in all_samples if s not in set_actual]   # 清单有而文件无
+    redundant = [s for s in set_actual if s not in set_expect]    # 文件有而清单无
+
+    if missing or redundant:
+        if missing:
+            print(f"Warning: 清单里有但 phylip 里缺失 {len(missing)} 个，名单：")
+            print('\n'.join(missing))
+        if redundant:
+            print(f"Warning: phylip 里出现但清单里未列入 {len(redundant)} 个，名单：")
+            print('\n'.join(redundant))
+    else:
+        print("样品清单与 phylip 文件完全一致，无缺失也无多余。")
+    # --- 6. 写出合并结果（略） ---
+    total_length = sum(gene_lengths)
+    with open(output_file, 'w') as out:
+        out.write(f"{len(all_samples)} {total_length}\n")
+        for s in all_samples:
+            full_seq = ''.join(seqs[s])
+            out.write(f"{s.ljust(30)}{full_seq}\n")
+
+    print(f"合并完成！输出文件：{output_file}")
+    print(f"样品数：{len(all_samples)}，总长度：{total_length}")
+
+# ---------------- 调用 ----------------
+base_path   = '/data/CMTG_genome_project/tree'
+sample_list = '/data/CMTG_genome_project/tree/sample_list.txt'
+output_file = 'merged_sequences.phylip'
+merge_phylip_files(base_path, sample_list, output_file)
+```
+
+Step 4 Running IQtree
+
+```
+iqtree -s merged_sequences.phylip -m MFP -bb 1000 -bnni --seqtype AA -pre fungi_genome -T AUTO --threads-max 128 --safe --quiet
+```
+
