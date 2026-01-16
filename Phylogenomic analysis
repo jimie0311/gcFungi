@@ -14,53 +14,49 @@ busco -i genome.fa -c 20 -o busco -m geno -l fungi_obd10 --offline
 ```markdown
 #!/bin/bash
 
-# 定义路径
+# define the path
 base_dir="/data/CMTG_genome_project/tree/"
 
-# 创建一个临时目录用于存储中间文件
+# create an temperary directory
 temp_dir=$(mktemp -d)
 cd "$temp_dir"
 
-# 初始化一个计数器，用于判断是否是第一个文件
+# judge if the first file
 first_file=1
 
-# 遍历每个样品的文件夹
+# Go through each sample's folder
 for dir in "$base_dir"/*/; do
-  # 获取样品名称（目录名）
+  # extract sample name
   sample_name=$(basename "$dir")
   
-  # 定义目标文件路径
+  # define target path
   target_file="$dir/run_fungi_odb10/full_table.tsv"
   
-  # 检查目标文件是否存在
+  # check wether the target file exists
   if [ ! -f "$target_file" ]; then
-    echo "警告: 文件 $target_file 不存在，跳过此样品。"
+    echo "warning: file $target_file doesn't exisit, skip it"
     continue
   fi
   
-  # 提取非 # 开头的行
-  filtered_content=$(grep -v '^#' "$target_file")
+    filtered_content=$(grep -v '^#' "$target_file")
   
-  # 提取前两列并去重
+  # Extract the first two columns and uniq
   if [ $first_file -eq 1 ]; then
-    # 第一个文件，提取前两列并去重，添加表头
-    echo -e "busco\t$sample_name" > "${sample_name}.col"
+        echo -e "busco\t$sample_name" > "${sample_name}.col"
     echo "$filtered_content" | awk '{print $1 "\t" $2}' | sort -u -k1,1 | awk '{print $1 "\t" $2}' >> "${sample_name}.col"
     first_file=0
   else
-    # 后续文件，提取第二列并去重，添加表头
-    echo -e "$sample_name" > "${sample_name}.col"
+       echo -e "$sample_name" > "${sample_name}.col"
     echo "$filtered_content" | awk '{print $1 "\t" $2}' | sort -u -k1,1 | awk '{print $2}' >> "${sample_name}.col"
   fi
 done
 
-# 合并所有列
+# merge all columns
 paste *.col > "$base_dir/combined_busco.tsv"
 
-# 清理临时文件
 rm -rf "$temp_dir"
 
-echo "完成！结果已保存到 $base_dir/combined_busco.tsv"
+echo "Done! results have been saved in $base_dir/combined_busco.tsv"
 
 
 # Calculate gene occurrence rates across all samples: For each BUSCO gene, determine its persence/absence proportion in the combined_busco.tsv
@@ -73,37 +69,30 @@ Step 3  fasta file for tree construction
 #run_alignment.sh
 ```
 #!/bin/bash
-定义路径
 base_path="/data/CMTG_genome_project/tree"
 busco_ids_file="single_busco.ID"
-#检查single_busco.ID文件是否存在
+#check if Single_busco.ID exists
 if \[\[ ! -f "`$base_path/$`busco\_ids\_file" ]]; then
 echo "Error: `$base_path/$`busco\_ids\_file does not exist."
 exit 1
 fi
-读取single_busco.ID文件中的每个buscoID
+
 while read -r busco_id; do 
-# 定义输出文件名 
 output_file="$busco_id.faa"
-# 清空或创建输出文件
+
 > "$output_file"
 
-# 遍历 base_path 下的所有文件夹（样本文件夹）
+# go through all sample folders in base_path
 for sample_path in "$base_path"/*; do
     [[ -d "$sample_path" ]] || continue
 
-    # ****** 关键：只取文件夹名 ******
-    sample_id=$(basename "$sample_path")
-        # 构造目标文件路径
-        target_file="$sample_id/run_fungi_odb10/busco_sequences/single_copy_busco_sequences/$busco_id.faa"
+       sample_id=$(basename "$sample_path")
+               target_file="$sample_id/run_fungi_odb10/busco_sequences/single_copy_busco_sequences/$busco_id.faa"
 
-        # 检查目标文件是否存在
-        if [[ -f "$target_file" ]]; then
-            # 如果存在则追加内容到输出文件
-           # ===== 新增：把以 > 开头的行替换为 >sampleID =====
+               if [[ -f "$target_file" ]]; then
            sed "s/^>.*/>$sample_id/" "$target_file" >> "$output_file" 
         else
-            # 如果不存在则写入缺失信息
+            # if absent fill gaps
             echo ">$sample_id" >> "$output_file"
         fi
  done
@@ -115,42 +104,16 @@ echo "Processed $busco_id. Output written to $output_file"
 
 ```
 #!/bin/bash
-定义路径
-base_path="/data/CMTG_genome_project/tree"
-busco_ids_file="single_busco.ID"
-#检查single_busco.ID文件是否存在
-if \[\[ ! -f "`$base_path/$`busco\_ids\_file" ]]; then
-echo "Error: `$base_path/$`busco\_ids\_file does not exist."
-exit 1
-fi
-读取single_busco.ID文件中的每个buscoID
-while read -r busco_id; do 
-# 定义输出文件名 
-output_file="$busco_id.faa"
-# 清空或创建输出文件
-> "$output_file"
-
-# 遍历 base_path 下的所有文件夹（样本文件夹）
-for sample_path in "$base_path"/*; do
-    [[ -d "$sample_path" ]] || continue
-
-    # ****** 关键：只取文件夹名 ******
-    sample_id=$(basename "$sample_path")
-        # 构造目标文件路径
-        target_file="$sample_id/run_fungi_odb10/busco_sequences/single_copy_busco_sequences/$busco_id.faa"
-
-        # 检查目标文件是否存在
-        if [[ -f "$target_file" ]]; then
-            # 如果存在则追加内容到输出文件
-           # ===== 新增：把以 > 开头的行替换为 >sampleID =====
-           sed "s/^>.*/>$sample_id/" "$target_file" >> "$output_file" 
-        else
-            # 如果不存在则写入缺失信息
-            echo ">$sample_id" >> "$output_file"
-        fi
- done
-
-echo "Processed $busco_id. Output written to $output_file"
+while read line
+do
+if [[ {line}.faa
+mafft --auto --thread 50 --quiet {line}.aligned.fasta
+/data/Liangjunmin/opt/biosoft/trimal/source/trimal -in {line}.trimed.fasta -gappyout
+#/data/Liangjunmin/opt/biosoft/trimal/source/trimal -in {line}.trimed.fasta -gt 0.8 -st 0.001 -cons 80
+#python fasta_to_phylip.py {line}.trimed.auto.phylip
+python fasta_to_phylip.py {line}.trimed.phylip
+#seqkit seq {line}.aligned.fasta
+done<single_busco.ID
 ```
 
 # merge alligned phylip file of every busco ID and the absent gene loci are filled by gaps
@@ -161,25 +124,24 @@ echo "Processed $busco_id. Output written to $output_file"
 import os
 
 def merge_phylip_files(base_path, sample_list, output_file):
-    # --- 1. 读入清单，去重并保持顺序 ---
+    # read sample list and keep the original orde
     with open(sample_list) as f:
         seen_lines = f.readlines()
-    # 用 dict 保持顺序去重（Python 3.7+ 有序）
     all_samples = list(dict.fromkeys(ln.strip() for ln in seen_lines if ln.strip()))
-    expected_cnt = len(all_samples)          # 去重后的真实期望数
+    expected_cnt = len(all_samples)     
 
-    # --- 2. 收集所有待合并的 phylip 文件 ---
+    # collect all phylip files and merge
     files = [f for f in os.listdir(base_path) if f.endswith('.phylip')]
     if not files:
-        print("Error: 目录下找不到任何 .phylip 文件")
+        print("Error: can not find any .phylip file")
         return
 
-    # --- 3. 初始化容器 ---
+    # Initialization container
     seqs = {s: [] for s in all_samples}
     gene_lengths = []
-    seen_samples = set()      # 真实出现过的样品
+    seen_samples = set()     
 
-    # --- 4. 逐个文件处理（略，与之前相同） ---
+    # treat files one by one
     for fname in files:
         fpath = os.path.join(base_path, fname)
         with open(fpath) as f:
@@ -199,23 +161,23 @@ def merge_phylip_files(base_path, sample_list, output_file):
             for s in all_samples:
                 seqs[s].append(present.get(s, '-' * L))
 
-       # --- 5. 双向检查 ---
-    set_expect = set(all_samples)          # 清单集合
-    set_actual = seen_samples              # phylip 出现集合
+       # double check
+    set_expect = set(all_samples)          
+    set_actual = seen_samples             
 
-    missing   = [s for s in all_samples if s not in set_actual]   # 清单有而文件无
-    redundant = [s for s in set_actual if s not in set_expect]    # 文件有而清单无
+    missing   = [s for s in all_samples if s not in set_actual]   # sample list includes but absent the corresponding phylip file
+    redundant = [s for s in set_actual if s not in set_expect]    # sample list doesn't include but present the corresponding phylip file
 
     if missing or redundant:
         if missing:
-            print(f"Warning: 清单里有但 phylip 里缺失 {len(missing)} 个，名单：")
+            print(f"Warning: exisit in the sample list but phylip files misse")
             print('\n'.join(missing))
         if redundant:
-            print(f"Warning: phylip 里出现但清单里未列入 {len(redundant)} 个，名单：")
+            print(f"Warning: exist in phylip file but not in sample list {len(redundant)} ")
             print('\n'.join(redundant))
     else:
-        print("样品清单与 phylip 文件完全一致，无缺失也无多余。")
-    # --- 6. 写出合并结果（略） ---
+        print("sample list and phylip files are consistent")
+    # Outputs
     total_length = sum(gene_lengths)
     with open(output_file, 'w') as out:
         out.write(f"{len(all_samples)} {total_length}\n")
@@ -223,8 +185,8 @@ def merge_phylip_files(base_path, sample_list, output_file):
             full_seq = ''.join(seqs[s])
             out.write(f"{s.ljust(30)}{full_seq}\n")
 
-    print(f"合并完成！输出文件：{output_file}")
-    print(f"样品数：{len(all_samples)}，总长度：{total_length}")
+    print(f"Merged！output file：{output_file}")
+    print(f"sample count：{len(all_samples)}，total length：{total_length}")
 
 # ---------------- 调用 ----------------
 base_path   = '/data/CMTG_genome_project/tree'
