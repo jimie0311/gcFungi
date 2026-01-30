@@ -7,10 +7,10 @@ Usage:
     perl $0 genome.fasta repeatMasker/genome.fasta.out repeatModeler/genome.fasta.out > genome.repeat.stats
 
     --min_coverge_ratio <float>    default: 0.25
-    设置最小覆盖率阈值。若匹配区域对目标重复序列的覆盖率低于此阈值，则过滤掉此结果。
+    A minimum coverage threshold. If the coverage of the target repetitive sequence by the matched region is lower than this threshold, the result will be filtered out. 
 
     --out_prefix <string>    default: genome.repeat
-    设置输出文件前缀。程序默认生成genome.repeat.out和genome.repeat.gff3两个结果文件。
+    Set the output file prefix. The program generates two result files by default: genome.repeat.out and genome.repeat.gff3.。
 
 USAGE
 if (@ARGV==0){die $usage}
@@ -70,7 +70,7 @@ foreach (@ARGV) {
 }
 close IN;
 
-# %stats1 统计子类的重复序列； %stats2统计大类的重复序列。
+# %stats1 statistics of repeat subclass ； %stats2 statistics of repeat class
 my (%stats1, %stats2, %Retroelements, %DNAelements, %Interspersed, %nonInterspersed, %total_repeat);
 foreach my $scaffold (@scaffold) {
     my %masked_site;
@@ -133,7 +133,7 @@ print "Class\tNumber\tLength\tPercentage\n";
 print "-------------------------------------------------------\n";
 printf "Total\t$total_repeat_num\t$total_repeat_size\t%.2f\%\n", $total_repeat_ratio;
 
-# 输出非散在重复序列的统计信息
+# print non-interspersed repeats
 my ($nonInterspersed_repeat_num, $nonInterspersed_size) = (0, 0);
 $nonInterspersed_repeat_num = $nonInterspersed{"num"} if $nonInterspersed{"num"};
 my @nonInterspersed_region = keys %{$nonInterspersed{"regions"}};
@@ -141,7 +141,7 @@ $nonInterspersed_size = &collect_length(@nonInterspersed_region) if @nonInterspe
 my $nonInterspersed_ratio = int($nonInterspersed_size / $genome_size * 10000) / 100;
 printf "    Non-interspersed Repeats\t$nonInterspersed_repeat_num\t$nonInterspersed_size\t%.2f\%\n", $nonInterspersed_ratio;
 
-# 输出非散在重复序列的子类统计信息
+# print subclass of non-interspersed repeats
 my @class_nonInterspersed = qw/Simple_repeat Low_complexity Satellite rRNA/;
 my %class_nonInterspersed_sort;
 foreach (@class_nonInterspersed) {
@@ -168,7 +168,7 @@ foreach my $class (sort {$class_nonInterspersed_sort{$b} <=> $class_nonIntersper
     }
 }
 
-# 输出散在重复序列的统计信息
+# print interspersed repeats
 my ($Interspersed_repeat_num, $Interspersed_size) = (0, 0);
 $Interspersed_repeat_num = $Interspersed{"num"} if $Interspersed{"num"};
 my @Interspersed_region = keys %{$Interspersed{"regions"}};
@@ -176,7 +176,7 @@ $Interspersed_size = &collect_length(@Interspersed_region) if @Interspersed_regi
 my $Interspersed_ratio = int($Interspersed_size / $genome_size * 10000) / 100;
 printf "    Interspersed Repeats\t$Interspersed_repeat_num\t$Interspersed_size\t%.2f\%\n", $Interspersed_ratio;
 
-# 输出逆转录转座子的统计信息
+# print Retroelements 
 my ($Retroelements_num, $Retroelements_size) = (0, 0);
 $Retroelements_num = $Retroelements{"num"} if $Retroelements{"num"};
 my @Retroelements_region = keys %{$Retroelements{"regions"}};
@@ -184,7 +184,7 @@ $Retroelements_size = &collect_length(@Retroelements_region) if @Retroelements_r
 my $Retroelements_ratio = int($Retroelements_size / $genome_size * 10000) / 100;
 printf "        Retroelements\t$Retroelements_num\t$Retroelements_size\t%.2f\%\n", $Retroelements_ratio;
 
-# 输出逆转录转座子的子类统计信息
+# print statistics of Retroelements
 my @class = sort keys %stats2;
 my %for_sort;
 foreach (@class) {
@@ -233,7 +233,7 @@ foreach my $class (@class) {
     }
 }
 
-# 输出DNA转座子的统计信息
+# print DNA elements
 my ($DNAelements_num, $DNAelements_size) = (0, 0);
 $DNAelements_num = $DNAelements{"num"} if $DNAelements{"num"};
 my @DNAelements_region = keys %{$DNAelements{"regions"}};
@@ -241,7 +241,7 @@ $DNAelements_size = &collect_length(@DNAelements_region) if @DNAelements_region;
 my $DNAelements_ratio = int($DNAelements_size / $genome_size * 10000) / 100;
 printf "        DNA transposons\t$DNAelements_num\t$DNAelements_size\t%.2f\%\n", $DNAelements_ratio;
 
-# 输出DNA转座子的子类统计信息
+# print subclass of DNA elements
 my @class_all = sort keys %stats2;
 my @class;
 foreach (@class_all) {
@@ -278,7 +278,7 @@ foreach my $class (@class) {
     }
 }
 
-# 输出其它散在重复序列的统计信息
+# print other repeats
 my @class = keys %stats2;
 my %for_sort;
 foreach (@class) {
@@ -310,9 +310,9 @@ foreach my $class (@class) {
 }
 print "=======================================================\n";
 
-print "# 注意事项：
-# 1. 某个大类的总个数可能超过其所属小类的总数之和，这是因为该大类下包含一些未能归于其子类的重复序列。
-# 2. 重复序列的总碱基数会小于各类型重复序列碱基数之和，这是因为不同类型的重复序列之间可能有重叠。\n";
+print "# NOTE：
+# 1. The total number of a certain major category may exceed the sum of the total numbers of its subordinate subcategories. This is because the major category includes some repetitive sequences that cannot be classified into its subcategories. 。
+# 2. The total number of base pairs of repetitive sequences will be less than the sum of the number of base pairs of each type of repetitive sequence, which is because there may be overlaps between different types of repetitive sequences.。\n";
 
 
 sub collect_length {
