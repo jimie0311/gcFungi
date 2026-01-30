@@ -1,17 +1,19 @@
 #Note: This pipeline is used for phylogenomic analysis based on BUSCO genes.
-#Step 1: Detection of BUSCO genes
-#Following the website https://busco.ezlab.org/ to install BUSCO v5 and dowload the BUSCO dataset of fungi_obd10
+## Step 1: Detection of BUSCO genes
+#Following the website https://busco.ezlab.org/ to install BUSCO v5 and dowload the BUSCO dataset of fungi_odb10
+```
 busco -i genome.fa -c 20 -o busco -m geno -l fungi_obd10 --offline
+```
 #run a circle to identify the busco genes of all genomes
 
-#Step 2: sample and busco gene filtering
+## Step 2: sample and busco gene filtering
 #data preparation Instructions
 #1. Place BUSCO result files for each sample in the current directory
 #2. Name sample forder using genome accession numbers (e.g., GCA_000000001.1)
 #3. Execute extract_busco.sh to extract 'full_table_tsv' files from each sample folder
-
 #extract_busco.sh
-```markdown
+
+```
 #!/bin/bash
 
 # define the path
@@ -50,13 +52,16 @@ for dir in "$base_dir"/*/; do
     echo "$filtered_content" | awk '{print $1 "\t" $2}' | sort -u -k1,1 | awk '{print $2}' >> "${sample_name}.col"
   fi
 done
+```
 
-# merge all columns
+#merge all columns
+```
 paste *.col > "$base_dir/combined_busco.tsv"
 
 rm -rf "$temp_dir"
 
 echo "Done! results have been saved in $base_dir/combined_busco.tsv"
+```
 
 
 # Calculate gene occurrence rates across all samples: For each BUSCO gene, determine its persence/absence proportion in the combined_busco.tsv
@@ -65,7 +70,7 @@ echo "Done! results have been saved in $base_dir/combined_busco.tsv"
 # Exclude samples with BUSCO completeness substantially lower than closely related taxa  (likely indicating poor assembly auality)
 # Export final gene set (single_busco.ID) for phylogenomic analysis
 
-Step 3  fasta file for tree construction
+## Step 3  fasta file for tree construction
 #run_alignment.sh
 ```
 #!/bin/bash
@@ -195,7 +200,7 @@ output_file = 'merged_sequences.phylip'
 merge_phylip_files(base_path, sample_list, output_file)
 ```
 
-Step 4 Running IQtree
+## Step 4 Running IQtree
 
 ```
 iqtree -s merged_sequences.phylip -m MFP -bb 1000 -bnni --seqtype AA -pre fungi_genome -T AUTO --threads-max 128 --safe --quiet
