@@ -1,4 +1,4 @@
-#############Long reads assembly################
+## Long reads assembly
 
 ```bash
 bash fungi_assembly_long_reads.sh -inputdir -type <Pacbio/Nanopore/Pacbio_hifi>  -software <Flye/Hicanu/Hiasm>  -threads  -database <BUSCO database> [-size <genome size>] [-hicreads <path to HiC reads1, reads2; optional>]
@@ -6,7 +6,7 @@ bash fungi_assembly_long_reads.sh -inputdir -type <Pacbio/Nanopore/Pacbio_hifi> 
 ```bash
 #!/bin/bash
 
-# data upload
+# Data upload
 while true; do
     case "$1" in
         -inputdir) inputdir=$2; shift 2;;
@@ -182,3 +182,4 @@ echo "QUAST: $quastfile" >> $resultfile
 echo "All steps completed successfully!"
 
 ```
+
