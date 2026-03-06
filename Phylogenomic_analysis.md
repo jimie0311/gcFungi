@@ -1,4 +1,4 @@
-###########Phylogenomic analysis############
+# Phylogenomic analysis
 
 #extract busco_full_table.tsv from each genome's busco folder
 Please run BUSCO first following the steps introduced by https://busco.ezlab.org/. All busco result folders are named with sample_name.
@@ -51,8 +51,8 @@ rm -rf "$temp_dir"
 echo "done successfully! the result is saved in $base_dir/combined_busco.tsv"
 
 ```
-# select single_busco ID for phylogenomic analysis.
-# Calculate the occurrence proportion of each BUSCO gene across all samples. Typically, select genes with a missing rate below 95%. Be sure to exclude samples where the BUSCO score is significantly lower than closely related taxa. Store the final determined single BUSCO gene IDs into the file single_busco.ID. When calculating the missing rate, do not include outgroup samples.
+select single_busco ID for phylogenomic analysis.
+Calculate the occurrence proportion of each BUSCO gene across all samples. Typically, select genes with a missing rate below 95%. Be sure to exclude samples where the BUSCO score is significantly lower than closely related taxa. Store the final determined single BUSCO gene IDs into the file single_busco.ID. When calculating the missing rate, do not include outgroup samples.
 
 ```bash
 #!/bin/bash
@@ -89,7 +89,7 @@ for sample_path in "$base_path"/*; do
 echo "Processed $busco_id. Output written to $output_file"
 ```
 ## blast with mafft
-# cut the unalligned head and end sequences and generate buscoID.aligned.fasta buscoID.trimed.fasta buscoID.trimed.phylip
+#cut the unalligned head and end sequences and generate buscoID.aligned.fasta buscoID.trimed.fasta buscoID.trimed.phylip
 
 ```bash
 #!/bin/bash
@@ -181,3 +181,4 @@ def merge_phylip_files(base_path, sample_list, output_file):
  iqtree -s merged_sequences.phylip -m MFP -bb 1000 -bnni --seqtype AA -pre fungi_genome -T AUTO --threads-max 160 --safe --quiet
 
 ```
+
