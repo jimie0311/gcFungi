@@ -1,4 +1,5 @@
-###########short_reads_assembly############
+## short_reads_assembly
+
 ```bash
 bash fungi_assembly.sh -outputdir  -configfile  -threads
 ```
@@ -67,4 +68,5 @@ do
 		seqkit seq -m 1000   ${outputDir}/spades/${file2}_spades_out//${file2}.fasta > ${outputDir}/spades/spades_result/${file2}.fasta
 
 done
+
 ```
