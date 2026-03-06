@@ -173,7 +173,7 @@ def merge_phylip_files(base_path, sample_list, output_file):
 
     print(f"merged sucessfully！output is {output_file}")
     print(f"sample count：{len(all_samples)}，total length is{total_length}")
-``
+```
 
 ## run phylogenomic tree
 
@@ -181,4 +181,5 @@ def merge_phylip_files(base_path, sample_list, output_file):
  iqtree -s merged_sequences.phylip -m MFP -bb 1000 -bnni --seqtype AA -pre fungi_genome -T AUTO --threads-max 160 --safe --quiet
 
 ```
+
 
