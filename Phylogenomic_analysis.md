@@ -1,4 +1,5 @@
 ###########Phylogenomic analysis############
+
 #extract busco_full_table.tsv from each genome's busco folder
 Please run BUSCO first following the steps introduced by https://busco.ezlab.org/. All busco result folders are named with sample_name.
 
@@ -178,4 +179,5 @@ def merge_phylip_files(base_path, sample_list, output_file):
 
 ```bash
  iqtree -s merged_sequences.phylip -m MFP -bb 1000 -bnni --seqtype AA -pre fungi_genome -T AUTO --threads-max 160 --safe --quiet
+
 ```
