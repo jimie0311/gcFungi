@@ -1,15 +1,15 @@
-## short_reads_assembly
+## Short_reads_assembly
 
 ```bash
 bash fungi_assembly.sh -outputdir  -configfile  -threads
 ```
 
-### data example
+### Data example
 
 - `-outputdir`: path to output direction
 - `-configfile`: config file in CSV inlcuding sample ID and the path to PE1 and PE2
 
-## Script
+### Script
 
 ```bash
 while true; do
@@ -70,3 +70,4 @@ do
 done
 
 ```
+
