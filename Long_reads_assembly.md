@@ -43,7 +43,7 @@ readsdir="tmp/inputfiles"
 
 ########## 3. run assembly according to selected softwares
 if [ "$software" == "Flye" ]; then
-    # Flye组装
+    # Flye assembly
     export TMPDIR=/tmp
     ls ${readsdir}/* > list
     reads=$(cat list | perl -pe "s#\n# #g")
@@ -180,4 +180,5 @@ echo "BUSCO: $buscofile" >> $resultfile
 echo "QUAST: $quastfile" >> $resultfile
 
 echo "All steps completed successfully!"
+
 ```
