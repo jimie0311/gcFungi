@@ -1,9 +1,9 @@
-# Phylogenomic analysis
+## Phylogenomic analysis
 
 #extract busco_full_table.tsv from each genome's busco folder
 Please run BUSCO first following the steps introduced by https://busco.ezlab.org/. All busco result folders are named with sample_name.
 
-## Script
+### Script
 
 ```bash
 #!/bin/bash
@@ -43,7 +43,7 @@ for dir in "$base_dir"/*/; do
   fi
 done
 
-# merge all columns
+### merge all columns
 paste *.col > "$base_dir/combined_busco.tsv"
 
 rm -rf "$temp_dir"
@@ -88,7 +88,7 @@ for sample_path in "$base_path"/*; do
 
 echo "Processed $busco_id. Output written to $output_file"
 ```
-## blast with mafft
+### blast with mafft
 #cut the unalligned head and end sequences and generate buscoID.aligned.fasta buscoID.trimed.fasta buscoID.trimed.phylip
 
 ```bash
@@ -104,7 +104,7 @@ python fasta_to_phylip.py {line}.trimed.phylip
 #seqkit seq {line}.aligned.fasta
 done<single_busco.ID
 ```
-## merge all phylip files
+### merge all phylip files
 ```bash
 #!/bin/env python3
 import os
@@ -175,11 +175,9 @@ def merge_phylip_files(base_path, sample_list, output_file):
     print(f"sample count：{len(all_samples)}，total length is{total_length}")
 ```
 
-## run phylogenomic tree
+### run phylogenomic tree
 
 ```bash
  iqtree -s merged_sequences.phylip -m MFP -bb 1000 -bnni --seqtype AA -pre fungi_genome -T AUTO --threads-max 160 --safe --quiet
 
 ```
-
-
